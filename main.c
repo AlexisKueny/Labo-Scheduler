@@ -144,8 +144,8 @@ void simulate(char filepath[], int algo) {
         elem3 = strtok(NULL, " ");
         elem4 = strtok(NULL, " ");
         processInfo_t process_info = {atoi(elem1),atoi(elem2),atoi(elem3),atoi(elem4)};
-        printf("PID: %d\n", process_info.pid);
         completionTime += process_info.execTime;
+        insertAtHead(&head, process_info);
 
         // Execute algorithm
         switch (algo) {
@@ -170,6 +170,7 @@ void simulate(char filepath[], int algo) {
             process_out.pid,process_out.turnAroundTime,process_out.waitTime,process_out.nTimes);
     }
     fclose(file);
+    printList(head);
     printf("\n");
 }
 
