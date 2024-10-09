@@ -9,6 +9,7 @@
 #define LINESIZE 250
 #define INPATH "C:\\Users\\alexi\\CLionProjects\\Scheduler\\tasks.csv"
 #define EXECOUTPATH "C:\\Users\\alexi\\CLionProjects\\Scheduler\\execution.csv"
+#define PERFOUTPATH "C:\\Users\\alexi\\CLionProjects\\Scheduler\\performance.csv"
 
 // Process data structures
 typedef struct ProcessInfo {
@@ -40,8 +41,10 @@ typedef struct processList{
 }processL_t;
 
 // ----------------------------------------------------------------------------------------------------------------- //
-//                                                              LINKED LISTS                                         //
+//                                                LINKED LISTS                                                       //
 // ------------------------------------------------------------------------------------------------------------------//
+
+// Function prototypes
 processL_t* createNode(processInfo_t data);
 void insertAtHead(processL_t** head, processInfo_t data);
 void insertAtEnd(processL_t** head, processInfo_t data);
@@ -134,6 +137,7 @@ void deleteList(processL_t** head) {
 void firstComeFirstServed(processL_t* head) {
     // Variable declarations
     int completionTime = 0;
+    int totalTime = 0;
     int turnAroundTime,waitingTime;
     processL_t *p_current = head;
     processExec_t process_exec;
@@ -245,7 +249,7 @@ void simulate(char filepath[], int algo) {
  */
 int main() {
     printf("Hello World!\n");
-    simulate(INPATH,2);
+    simulate(INPATH,1);
     printf("End Of Program P1\n");
     return 0;
 }
