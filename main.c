@@ -35,14 +35,14 @@ typedef struct processList{
  struct processList *next;
 }processL_t;
 
-// Function prototypes
+// ----------------------------------------------------------------------------------------------------------------------------------------------
+//                                                              LINKED LISTS
+// ----------------------------------------------------------------------------------------------------------------------------------------------
 processL_t* createNode(processInfo_t data);
-processExec_t fCFS (processInfo_t process, int completionTime);
 void insertAtHead(processL_t** head, processInfo_t data);
 void insertAtEnd(processL_t** head, processInfo_t data);
 void printList(processL_t* head);
 void deleteList(processL_t** head);
-void simulate(char filepath[], int algo);
 
 /**
  * Creates new list node
@@ -119,6 +119,37 @@ void deleteList(processL_t** head) {
     *head = NULL;
 }
 
+// ---------------------------------------------------------------------------------------------------------------------------------------------------
+//                                             SCHEDULER ALGORITHMS
+// ---------------------------------------------------------------------------------------------------------------------------------------------------
+
+
+/**
+ * Executes first come first served algorithm, which handles processes by order of arrival
+ * @param head Head of linked lists containing incoming process information
+ */
+void firstComeFirstServed(processL_t* head) {
+    int completionTime = 0;
+    int turnAroundTime,waitingTime;
+    processL_t *p_current = head;
+    processExec_t process_exec;
+
+    while(p_current != NULL) {
+        completionTime += p_current->p_e.execTime;
+        turnAroundTime = completionTime - p_current->p_e.arrTime;
+        waitingTime = turnAroundTime - p_current->p_e.execTime;
+        processExec_t process_exec = {p_current->p_e.pid, turnAroundTime, waitingTime,0};
+        printf("Output: %d,%d,%d,%d \n", process_exec.pid,process_exec.turnAroundTime,process_exec.waitTime,process_exec.nTimes);
+        p_current = p_current->next;
+    }
+
+    printList(head);
+}
+
+void roundRobin(processL_t* head) {
+    printList(head);
+}
+
 /**
  * Simulates an OS scheduler
  * @param filepath The filepath to the CSV containing the tasks to analyze
@@ -136,58 +167,32 @@ void simulate(char filepath[], int algo) {
     FILE *file = fopen(filepath, "r");
     FILE *myStream = fopen("C:\\Users\\alexi\\CLionProjects\\Scheduler\\execution.csv","w");
 
-    // Reads file line by line
+    /*
+     * PART I: READ FILE LINE BY LINE AND INSERT IN LINKED LIST
+     */
     while (fgets(line, sizeof(line), file)) {
         // Fill out the process structure
         elem1 = strtok(line, " ");
         elem2 = strtok(NULL, " ");
         elem3 = strtok(NULL, " ");
         elem4 = strtok(NULL, " ");
-        processInfo_t process_info = {atoi(elem1),atoi(elem2),atoi(elem3),atoi(elem4)};
-        completionTime += process_info.execTime;
-        insertAtHead(&head, process_info);
-
-        // Execute algorithm
-        switch (algo) {
-            // First come, first served algorithm
-            case 1:
-                process_out = fCFS(process_info,completionTime);
-                break;
-            case 2:
-                break;
-            case 3:
-                break;
-            case 4:
-                break;
-            default:
-                break;
-        }
-        printf("Output Algo1: PID: %d, Turnaround time: %d, Waiting time: %d, Preempted times: %d \n",
-            process_out.pid,process_out.turnAroundTime,process_out.waitTime,process_out.nTimes);
-
-        // Write result into output file
-        fprintf(myStream, "%d %d %d %d\n",
-            process_out.pid,process_out.turnAroundTime,process_out.waitTime,process_out.nTimes);
+        processInfo_t process_info = {atoi(elem1),atoi(elem2),atoi(elem3),atoi(elem4)}; // All necessary process info
+        insertAtEnd(&head, process_info);
     }
     fclose(file);
-    printList(head);
+    //printList(head);
     printf("\n");
-}
 
-/**
- * First come, first served algorithm which executes processes in order of arrival
- * @param process The process in question; comes with PID,arrival time, wait time and priority
- * @param completionTime The time when the process was completed
- * @return Execution data for the process
- */
-processExec_t fCFS (processInfo_t process, int completionTime) {
-    int turnAroundTime = completionTime - process.arrTime;
-    int waitingTime = turnAroundTime - process.execTime;
-    processExec_t process_exec = {process.pid,turnAroundTime,waitingTime,0};
-    return process_exec;
-}
-
-processExec_t roundRobin(processInfo_t process) {
+    /*
+     * PART II: CALL REQUESTED ALGORITHM
+     */
+    switch (algo) {
+        case 1:
+            printList(head);
+            firstComeFirstServed(head);
+        default:
+            break;
+    }
 }
 
 /**
