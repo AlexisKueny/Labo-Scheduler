@@ -37,15 +37,17 @@ typedef struct processList{
 
 // Function prototypes
 processL_t* createNode(processInfo_t data);
+processExec_t fCFS (processInfo_t process, int completionTime);
 void insertAtHead(processL_t** head, processInfo_t data);
 void insertAtEnd(processL_t** head, processInfo_t data);
 void printList(processL_t* head);
 void deleteList(processL_t** head);
+void simulate(char filepath[], int algo);
 
 /**
  * Creates new list node
  * @param data Data to insert in list
- * @return Brand new node
+ * @return Brand-new node
  */
 processL_t* createNode(processInfo_t data) {
     processL_t* newNode = (processL_t*)malloc(sizeof(processL_t));
@@ -117,20 +119,6 @@ void deleteList(processL_t** head) {
     *head = NULL;
 }
 
-
-/**
- * First come, first served algorithm which executes processes in order of arrival
- * @param process The process in question; comes with PID,arrival time, wait time and priority
- * @param completionTime The time when the process was completed
- * @return Execution data for the process
- */
-processExec_t fCFS (processInfo_t process, int completionTime) {
-    int turnAroundTime = completionTime - process.arrTime;
-    int waitingTime = turnAroundTime - process.execTime;
-    processExec_t process_exec = {process.pid,turnAroundTime,waitingTime,0};
-    return process_exec;
-}
-
 /**
  * Simulates an OS scheduler
  * @param filepath The filepath to the CSV containing the tasks to analyze
@@ -141,7 +129,6 @@ void simulate(char filepath[], int algo) {
     char* line[LINESIZE];
     char *elem1, *elem2, *elem3, *elem4;
     int completionTime = 0;
-    int turnAroundTime,waitingTime,executionTime,priority;
     processExec_t process_out = {0,0,0,0};
     processInfo_t process_info = {0,0,0,0};
 
@@ -184,6 +171,19 @@ void simulate(char filepath[], int algo) {
     }
     fclose(file);
     printf("\n");
+}
+
+/**
+ * First come, first served algorithm which executes processes in order of arrival
+ * @param process The process in question; comes with PID,arrival time, wait time and priority
+ * @param completionTime The time when the process was completed
+ * @return Execution data for the process
+ */
+processExec_t fCFS (processInfo_t process, int completionTime) {
+    int turnAroundTime = completionTime - process.arrTime;
+    int waitingTime = turnAroundTime - process.execTime;
+    processExec_t process_exec = {process.pid,turnAroundTime,waitingTime,0};
+    return process_exec;
 }
 
 /**
