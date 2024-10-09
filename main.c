@@ -16,6 +16,7 @@ typedef struct ProcessInfo {
     int arrTime;
     int execTime;
     int priority;
+    int timeLeft;
     int completionTime;
 } processInfo_t;
 
@@ -155,6 +156,7 @@ void firstComeFirstServed(processL_t* head) {
 
 void roundRobin(processL_t* head) {
     int timeFlow = 0;
+    int turnAround,waitingTime;
     processL_t *p_current = head;
     printList(head);
     printf("\n");
@@ -163,21 +165,29 @@ void roundRobin(processL_t* head) {
     processL_t *queue_head = NULL;
     processL_t *queue_current = queue_head;
 
-    while(p_current != NULL) {
-        p_current->p_e.execTime -= RR_QUANTUM;
+    // File output
+    FILE *outStream = fopen(EXECOUTPATH,"w");
 
-        if (p_current->p_e.execTime == 0) {
+    while(p_current != NULL) {
+        p_current->p_e.timeLeft -= RR_QUANTUM;
+
+        if (p_current->p_e.timeLeft == 0) {
             p_current->p_e.completionTime = timeFlow;
+            turnAround = p_current->p_e.completionTime - p_current->p_e.arrTime;
+            waitingTime = turnAround - p_current->p_e.execTime;
+            processExec_t process_exec = {p_current->p_e.pid, turnAround, waitingTime,0};
+            fprintf(outStream,"%d %d %d %d\n",process_exec.pid,process_exec.turnAroundTime,process_exec.waitTime,0);
         }
         else {
             insertAtEnd(&head,p_current->p_e);
         }
-        printf("Current process: pid %d arrTime: %d execution time: %d completion time: %d \n",
-            p_current->p_e.pid,p_current->p_e.arrTime,p_current->p_e.execTime,p_current->p_e.completionTime);
+        printf("Current process: pid %d arrTime: %d execution time: %d time left: %d completion time: %d \n",
+            p_current->p_e.pid,p_current->p_e.arrTime,p_current->p_e.execTime,p_current->p_e.timeLeft,p_current->p_e.completionTime);
 
         timeFlow += RR_QUANTUM;
         p_current = p_current->next;
     }
+    fclose(outStream);
 }
 
 /**
@@ -206,7 +216,7 @@ void simulate(char filepath[], int algo) {
         elem2 = strtok(NULL, " ");
         elem3 = strtok(NULL, " ");
         elem4 = strtok(NULL, " ");
-        processInfo_t process_info = {atoi(elem1),atoi(elem2),atoi(elem3),atoi(elem4)}; // All necessary process info
+        processInfo_t process_info = {atoi(elem1),atoi(elem2),atoi(elem3),atoi(elem4),atoi(elem3)}; // All necessary process info
         insertAtEnd(&head, process_info);
     }
     fclose(file);
