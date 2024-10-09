@@ -1,11 +1,14 @@
+// Imports
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
+// Macros
 #define RR_QUANTUM 2
 #define CNTXT_SWITCH 1
 #define LINESIZE 250
 
+// Process data structures
 typedef struct ProcessInfo {
     int pid;
     int arrTime;
@@ -26,9 +29,94 @@ typedef struct ProcessPerf {
     int total_time_ctx_switch;
 } processPerf_t;
 
-// Linked list struct
-struct Data {
-};
+// Define the structure of a node in the linked list
+typedef struct processList{
+ processInfo_t p_e;
+ struct processList *next;
+}processL_t;
+
+// Function prototypes
+processL_t* createNode(processInfo_t data);
+void insertAtHead(processL_t** head, processInfo_t data);
+void insertAtEnd(processL_t** head, processInfo_t data);
+void printList(processL_t* head);
+void deleteList(processL_t** head);
+
+/**
+ * Creates new list node
+ * @param data Data to insert in list
+ * @return Brand new node
+ */
+processL_t* createNode(processInfo_t data) {
+    processL_t* newNode = (processL_t*)malloc(sizeof(processL_t));
+    if (newNode == NULL) {
+        printf("Memory allocation failed\n");
+        exit(1);
+    }
+    newNode->p_e = data;
+    newNode->next = NULL;
+    return newNode;
+}
+
+/**
+ * Inserts a node at the beginning of list
+ * @param head head of list
+ * @param data data to store
+ */
+void insertAtHead(processL_t** head, processInfo_t data) {
+    processL_t* newNode = createNode(data);
+    newNode->next = *head;
+    *head = newNode;
+}
+
+/**
+ * Inserts a node at end of list
+ * @param head Head of list
+ * @param data Data to store
+ */
+void insertAtEnd(processL_t** head, processInfo_t data) {
+    processL_t* newNode = createNode(data);
+    if (*head == NULL) {
+        *head = newNode;
+        return;
+    }
+    processL_t* temp = *head;
+    while (temp->next != NULL) {
+        temp = temp->next;
+    }
+    temp->next = newNode;
+}
+
+/**
+ * Prints the linked list
+ * @param head head of linked list
+ */
+void printList(processL_t* head) {
+    processL_t* p = head;
+    while (p != NULL) {
+        printf("Process ID: %d, Arrival Time: %d, Execution Time: %d, Priority: %d\n",
+            p->p_e.pid, p->p_e.arrTime,
+            p->p_e.execTime, p->p_e.priority);
+        p = p->next;
+    }
+    printf("NULL\n");
+}
+
+/**
+ * Deletes the linked list
+ * @param head head of list
+ */
+void deleteList(processL_t** head) {
+    processL_t* temp = *head;
+    processL_t* nextNode;
+    while (temp != NULL) {
+        nextNode = temp->next;
+        free(temp);
+        temp = nextNode;
+    }
+    *head = NULL;
+}
+
 
 /**
  * First come, first served algorithm which executes processes in order of arrival
