@@ -7,6 +7,8 @@
 #define RR_QUANTUM 2
 #define CNTXT_SWITCH 1
 #define LINESIZE 250
+#define INPATH "C:\\Users\\alexi\\CLionProjects\\Scheduler\\tasks.csv"
+#define EXECOUTPATH "C:\\Users\\alexi\\CLionProjects\\Scheduler\\execution.csv"
 
 // Process data structures
 typedef struct ProcessInfo {
@@ -125,25 +127,29 @@ void deleteList(processL_t** head) {
 
 
 /**
- * Executes first come first served algorithm, which handles processes by order of arrival
+ * Executes first come first served algorithm, which handles processes by order of arrival. Writes into execution file
  * @param head Head of linked lists containing incoming process information
  */
 void firstComeFirstServed(processL_t* head) {
+    // Variable declarations
     int completionTime = 0;
     int turnAroundTime,waitingTime;
     processL_t *p_current = head;
     processExec_t process_exec;
 
+    // Output stream
+    FILE *outStream = fopen(EXECOUTPATH,"w");
+
+    // Iterate through list and write into file
     while(p_current != NULL) {
         completionTime += p_current->p_e.execTime;
         turnAroundTime = completionTime - p_current->p_e.arrTime;
         waitingTime = turnAroundTime - p_current->p_e.execTime;
         processExec_t process_exec = {p_current->p_e.pid, turnAroundTime, waitingTime,0};
-        printf("Output: %d,%d,%d,%d \n", process_exec.pid,process_exec.turnAroundTime,process_exec.waitTime,process_exec.nTimes);
+        fprintf(outStream,"%d %d %d %d \n", process_exec.pid,process_exec.turnAroundTime,process_exec.waitTime,process_exec.nTimes);
         p_current = p_current->next;
     }
-
-    printList(head);
+    fclose(outStream);
 }
 
 void roundRobin(processL_t* head) {
@@ -201,7 +207,7 @@ void simulate(char filepath[], int algo) {
  */
 int main() {
     printf("Hello World!\n");
-    simulate("C:\\Users\\alexi\\CLionProjects\\Scheduler\\tasks.csv",1);
+    simulate(INPATH,1);
     printf("End Of Program P1\n");
     return 0;
 }
