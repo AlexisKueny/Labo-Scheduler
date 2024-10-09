@@ -30,7 +30,12 @@ typedef struct ProcessPerf {
 struct Data {
 };
 
-// Fist come first serve algorithm
+/**
+ * First come, first served algorithm which executes processes in order of arrival
+ * @param process The process in question; comes with PID,arrival time, wait time and priority
+ * @param completionTime The time when the process was completed
+ * @return Execution data for the process
+ */
 processExec_t fCFS (processInfo_t process, int completionTime) {
     int turnAroundTime = completionTime - process.arrTime;
     int waitingTime = turnAroundTime - process.execTime;
@@ -38,6 +43,11 @@ processExec_t fCFS (processInfo_t process, int completionTime) {
     return process_exec;
 }
 
+/**
+ * Simulates an OS scheduler
+ * @param filepath The filepath to the CSV containing the tasks to analyze
+ * @param algo The chosen algorithm to handle the tasks
+ */
 void simulate(char filepath[], int algo) {
     // Declare variables
     char* line[LINESIZE];
@@ -88,6 +98,10 @@ void simulate(char filepath[], int algo) {
     printf("\n");
 }
 
+/**
+ * Main function to execute program
+ * @return 0
+ */
 int main() {
     printf("Hello World!\n");
     simulate("C:\\Users\\alexi\\CLionProjects\\Scheduler\\tasks.csv",1);
