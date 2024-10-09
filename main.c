@@ -129,8 +129,8 @@ void simulate(char filepath[], int algo) {
     char* line[LINESIZE];
     char *elem1, *elem2, *elem3, *elem4;
     int completionTime = 0;
+    processL_t* head = NULL;
     processExec_t process_out = {0,0,0,0};
-    processInfo_t process_info = {0,0,0,0};
 
     // File streams
     FILE *file = fopen(filepath, "r");
@@ -184,6 +184,9 @@ processExec_t fCFS (processInfo_t process, int completionTime) {
     int waitingTime = turnAroundTime - process.execTime;
     processExec_t process_exec = {process.pid,turnAroundTime,waitingTime,0};
     return process_exec;
+}
+
+processExec_t roundRobin(processInfo_t process) {
 }
 
 /**
