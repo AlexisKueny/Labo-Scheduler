@@ -16,6 +16,7 @@ typedef struct ProcessInfo {
     int arrTime;
     int execTime;
     int priority;
+    int completionTime;
 } processInfo_t;
 
 typedef struct ProcessExec {
@@ -37,9 +38,9 @@ typedef struct processList{
  struct processList *next;
 }processL_t;
 
-// ----------------------------------------------------------------------------------------------------------------------------------------------
-//                                                              LINKED LISTS
-// ----------------------------------------------------------------------------------------------------------------------------------------------
+// ----------------------------------------------------------------------------------------------------------------- //
+//                                                              LINKED LISTS                                         //
+// ------------------------------------------------------------------------------------------------------------------//
 processL_t* createNode(processInfo_t data);
 void insertAtHead(processL_t** head, processInfo_t data);
 void insertAtEnd(processL_t** head, processInfo_t data);
@@ -121,10 +122,9 @@ void deleteList(processL_t** head) {
     *head = NULL;
 }
 
-// ---------------------------------------------------------------------------------------------------------------------------------------------------
-//                                             SCHEDULER ALGORITHMS
-// ---------------------------------------------------------------------------------------------------------------------------------------------------
-
+// -------------------------------------------------------------------------------------------------------------------//
+//                                             SCHEDULER ALGORITHMS                                                   //
+// -------------------------------------------------------------------------------------------------------------------//
 
 /**
  * Executes first come first served algorithm, which handles processes by order of arrival. Writes into execution file
@@ -146,6 +146,7 @@ void firstComeFirstServed(processL_t* head) {
         turnAroundTime = completionTime - p_current->p_e.arrTime;
         waitingTime = turnAroundTime - p_current->p_e.execTime;
         processExec_t process_exec = {p_current->p_e.pid, turnAroundTime, waitingTime,0};
+        printf("%d %d %d %d \n", process_exec.pid,process_exec.turnAroundTime,process_exec.waitTime,process_exec.nTimes);
         fprintf(outStream,"%d %d %d %d \n", process_exec.pid,process_exec.turnAroundTime,process_exec.waitTime,process_exec.nTimes);
         p_current = p_current->next;
     }
@@ -153,7 +154,30 @@ void firstComeFirstServed(processL_t* head) {
 }
 
 void roundRobin(processL_t* head) {
+    int timeFlow = 0;
+    processL_t *p_current = head;
     printList(head);
+    printf("\n");
+
+    // Request queue list
+    processL_t *queue_head = NULL;
+    processL_t *queue_current = queue_head;
+
+    while(p_current != NULL) {
+        p_current->p_e.execTime -= RR_QUANTUM;
+
+        if (p_current->p_e.execTime == 0) {
+            p_current->p_e.completionTime = timeFlow;
+        }
+        else {
+            insertAtEnd(&head,p_current->p_e);
+        }
+        printf("Current process: pid %d arrTime: %d execution time: %d completion time: %d \n",
+            p_current->p_e.pid,p_current->p_e.arrTime,p_current->p_e.execTime,p_current->p_e.completionTime);
+
+        timeFlow += RR_QUANTUM;
+        p_current = p_current->next;
+    }
 }
 
 /**
@@ -194,10 +218,14 @@ void simulate(char filepath[], int algo) {
      */
     switch (algo) {
         case 1:
-            printList(head);
             firstComeFirstServed(head);
-        default:
             break;
+        case 2:
+            roundRobin(head);
+            break;
+        default:
+            printf("Invalid output\n");
+            exit(1);
     }
 }
 
@@ -207,7 +235,7 @@ void simulate(char filepath[], int algo) {
  */
 int main() {
     printf("Hello World!\n");
-    simulate(INPATH,1);
+    simulate(INPATH,2);
     printf("End Of Program P1\n");
     return 0;
 }
