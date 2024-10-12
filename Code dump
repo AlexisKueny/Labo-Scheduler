@@ -1,24 +1,17 @@
-completionTime += process_info.execTime;
+while(1) {
+        timeFlow += RR_QUANTUM;
 
-
-        // Execute algorithm
-        switch (algo) {
-            // First come, first served algorithm
-            case 1:
-                process_out = fCFS(process_info,completionTime);
-                break;
-            case 2:
-                break;
-            case 3:
-                break;
-            case 4:
-                break;
-            default:
-                break;
+        while (p_current->next != NULL) {
+            if (p_current->p_e.arrTime <= timeFlow && p_current->p_e.timeLeft > 0) {
+                p_current->p_e.timeLeft -= RR_QUANTUM;
+                insertAtEnd(&queue_head,p_current->p_e);
+            }
+            else if (p_current->next->next != NULL) {
+                p_current = p_current->next;
+            }
         }
-        printf("Output Algo1: PID: %d, Turnaround time: %d, Waiting time: %d, Preempted times: %d \n",
-            process_out.pid,process_out.turnAroundTime,process_out.waitTime,process_out.nTimes);
 
-        // Write result into output file
-        fprintf(myStream, "%d %d %d %d\n",
-            process_out.pid,process_out.turnAroundTime,process_out.waitTime,process_out.nTimes);
+        if (p_current->next == NULL) {
+            p_current = head;
+        }
+    }

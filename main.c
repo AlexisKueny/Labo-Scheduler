@@ -21,13 +21,6 @@ typedef struct ProcessInfo {
     int completionTime;
 } processInfo_t;
 
-typedef struct ProcessExec {
-    int pid;
-    int turnAroundTime;
-    int waitTime;
-    int nTimes;
-} processExec_t;
-
 typedef struct ProcessPerf {
     int total_time;
     int total_nr_ctxt_switch;
@@ -140,20 +133,24 @@ void firstComeFirstServed(processL_t* head) {
     int totalTime = 0;
     int turnAroundTime,waitingTime;
     processL_t *p_current = head;
-    processExec_t process_exec;
+    int timeFlow = 0;
 
     // Output stream
     FILE *outStream = fopen(EXECOUTPATH,"w");
 
     // Iterate through list and write into file
     while(p_current != NULL) {
-        completionTime += p_current->p_e.execTime;
-        turnAroundTime = completionTime - p_current->p_e.arrTime;
-        waitingTime = turnAroundTime - p_current->p_e.execTime;
-        processExec_t process_exec = {p_current->p_e.pid, turnAroundTime, waitingTime,0};
-        printf("%d %d %d %d \n", process_exec.pid,process_exec.turnAroundTime,process_exec.waitTime,process_exec.nTimes);
-        fprintf(outStream,"%d %d %d %d \n", process_exec.pid,process_exec.turnAroundTime,process_exec.waitTime,process_exec.nTimes);
-        p_current = p_current->next;
+        if (p_current->p_e.arrTime <= timeFlow) {
+            timeFlow += p_current->p_e.execTime;
+            p_current->p_e.completionTime = timeFlow;
+            turnAroundTime = p_current->p_e.completionTime - p_current->p_e.arrTime;
+            waitingTime = turnAroundTime - p_current->p_e.execTime;
+            fprintf(outStream,"%d %d %d %d\n",p_current->p_e.pid,turnAroundTime,waitingTime,0);
+            p_current = p_current->next;
+        }
+        else {
+            timeFlow ++;
+        }
     }
     fclose(outStream);
 }
@@ -172,25 +169,6 @@ void roundRobin(processL_t* head) {
     // File output
     FILE *outStream = fopen(EXECOUTPATH,"w");
 
-    while(p_current != NULL) {
-        p_current->p_e.timeLeft -= RR_QUANTUM;
-
-        if (p_current->p_e.timeLeft == 0) {
-            p_current->p_e.completionTime = timeFlow;
-            turnAround = p_current->p_e.completionTime - p_current->p_e.arrTime;
-            waitingTime = turnAround - p_current->p_e.execTime;
-            processExec_t process_exec = {p_current->p_e.pid, turnAround, waitingTime,0};
-            fprintf(outStream,"%d %d %d %d\n",process_exec.pid,process_exec.turnAroundTime,process_exec.waitTime,0);
-        }
-        else {
-            insertAtEnd(&head,p_current->p_e);
-        }
-        printf("Current process: pid %d arrTime: %d execution time: %d time left: %d completion time: %d \n",
-            p_current->p_e.pid,p_current->p_e.arrTime,p_current->p_e.execTime,p_current->p_e.timeLeft,p_current->p_e.completionTime);
-
-        timeFlow += RR_QUANTUM;
-        p_current = p_current->next;
-    }
     fclose(outStream);
 }
 
@@ -205,7 +183,6 @@ void simulate(char filepath[], int algo) {
     char *elem1, *elem2, *elem3, *elem4;
     int completionTime = 0;
     processL_t* head = NULL;
-    processExec_t process_out = {0,0,0,0};
 
     // File streams
     FILE *file = fopen(filepath, "r");
