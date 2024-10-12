@@ -21,11 +21,10 @@ typedef struct ProcessInfo {
     int completionTime;
 } processInfo_t;
 
-typedef struct ProcessPerf {
-    int total_time;
-    int total_nr_ctxt_switch;
-    int total_time_ctx_switch;
-} processPerf_t;
+void printStruct(processInfo_t value) {
+    printf("PID:%d,ArrTime:%d,ExecTime:%d,Priority:%d,TimeLeft:%d,CompletionTime:%d\n",
+        value.pid,value.arrTime,value.execTime,value.priority,value.timeLeft,value.completionTime);
+}
 
 // Define the structure of a node in the linked list
 typedef struct processList{
@@ -119,6 +118,21 @@ void deleteList(processL_t** head) {
     *head = NULL;
 }
 
+/**
+ * Returns length of linked list
+ * @param head head of linked list
+ * @return length of linked lists
+ */
+int findLength(processL_t* head) {
+    int count = 0;
+    processL_t* p_current = head;
+    while (p_current != NULL) {
+        count++;
+        p_current = p_current->next;
+    }
+    return count;
+}
+
 // -------------------------------------------------------------------------------------------------------------------//
 //                                             SCHEDULER ALGORITHMS                                                   //
 // -------------------------------------------------------------------------------------------------------------------//
@@ -158,7 +172,10 @@ void firstComeFirstServed(processL_t* head) {
 void roundRobin(processL_t* head) {
     int timeFlow = 0;
     int turnAround,waitingTime;
+    int completionCount = 1;
     processL_t *p_current = head;
+    int listLength = findLength(head);
+    printf("Length of list is: %d\n",findLength(head));
     printList(head);
     printf("\n");
 
@@ -169,6 +186,24 @@ void roundRobin(processL_t* head) {
     // File output
     FILE *outStream = fopen(EXECOUTPATH,"w");
 
+    while (completionCount < listLength + 1) {
+        while (p_current != NULL) {
+            if (p_current->p_e.arrTime <= timeFlow && p_current->p_e.timeLeft > 0) {
+                printStruct(p_current->p_e);
+                p_current->p_e.timeLeft -= RR_QUANTUM;
+            }
+            else if (p_current->p_e.timeLeft == 0 && p_current->p_e.pid == completionCount) {
+                p_current->p_e.completionTime = timeFlow;
+                turnAround = p_current->p_e.completionTime - p_current->p_e.arrTime;
+                waitingTime = turnAround - p_current->p_e.execTime;
+                fprintf(outStream,"%d %d %d %d\n",p_current->p_e.pid,turnAround,waitingTime,0);
+                completionCount++;
+            }
+            p_current = p_current->next;
+        }
+        timeFlow += RR_QUANTUM;
+        p_current = head;
+    }
     fclose(outStream);
 }
 
@@ -226,7 +261,7 @@ void simulate(char filepath[], int algo) {
  */
 int main() {
     printf("Hello World!\n");
-    simulate(INPATH,1);
+    simulate(INPATH,2);
     printf("End Of Program P1\n");
     return 0;
 }
