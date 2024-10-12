@@ -15,6 +15,7 @@
 typedef struct ProcessInfo {
     int pid;
     int arrTime;
+    int startTime;
     int execTime;
     int priority;
     int timeLeft;
@@ -133,12 +134,35 @@ int findLength(processL_t* head) {
     return count;
 }
 
+/**
+ * Return the first process with the highest priority.
+ * And that can be run.
+ * @param head head of list
+ * @param currentTime time when the scheduler request the process
+ */
+processL_t* selectHighestPriorityProcess(processL_t* head, int currentTime) {
+    processL_t* highestPriority = NULL;
+    processL_t* temp = head;
+
+    while (temp != NULL) {
+        if (temp->p_e.arrTime <= currentTime) {  // Only consider processes that have arrived
+            if (highestPriority == NULL || temp->p_e.priority < highestPriority->p_e.priority) {
+                highestPriority = temp;
+            }
+        }
+        temp = temp->next;
+    }
+
+    return highestPriority;
+}
+
 // -------------------------------------------------------------------------------------------------------------------//
 //                                             SCHEDULER ALGORITHMS                                                   //
 // -------------------------------------------------------------------------------------------------------------------//
 
 /**
- * Executes first come first served algorithm, which handles processes by order of arrival. Writes into execution file
+ * Executes first come, first served algorithm, which handles processes by order of arrival.
+ * Writes into execution.csv
  * @param head Head of linked lists containing incoming process information
  */
 void firstComeFirstServed(processL_t* head) {
@@ -169,6 +193,11 @@ void firstComeFirstServed(processL_t* head) {
     fclose(outStream);
 }
 
+/**
+ * Round-robin algorithm for process management.
+ * Writes output into "exec.csv"
+ * @param head of data list
+ */
 void roundRobin(processL_t* head) {
     int timeFlow = 0;
     int turnAround,waitingTime;
@@ -210,6 +239,89 @@ void roundRobin(processL_t* head) {
     fclose(outStream);
 }
 
+void priority_algo(processL_t** head) {
+    processL_t* runningProcess = NULL;  // The process currently being executed
+    processL_t* prev = NULL;            // Pointer to track the previous process in the list
+    processL_t* temp = NULL;            // Temporary pointer for removing nodes
+    int time = 0;                       // Global time
+    int contextSwitches = 0;            // Number of context switches
+
+    // Output file stream to write execution results
+    FILE *outStream = fopen(EXECOUTPATH, "w");
+    if (outStream == NULL) {
+        printf("Error opening output file\n");
+        return;
+    }
+
+    // Priority-based preemptive scheduling simulation
+    while (*head || runningProcess) {
+        // Select the highest priority process that has arrived
+        processL_t* selected = selectHighestPriorityProcess(*head, time);
+
+        // Preemption: If a higher-priority process is available, preempt the current one
+        if (runningProcess && selected && selected->p_e.priority < runningProcess->p_e.priority) {
+            printf("Time %d: Preempting process PID: %d for higher-priority process PID: %d\n",
+                   time, runningProcess->p_e.pid, selected->p_e.pid);
+            time += CNTXT_SWITCH;
+            contextSwitches++;
+            runningProcess = NULL;
+        }
+
+        // If the running process has finished execution
+        if (runningProcess && runningProcess->p_e.timeLeft == 0) {
+            printf("Time %d: Process PID: %d finished execution\n", time, runningProcess->p_e.pid);
+            int turnaroundTime = time - runningProcess->p_e.arrTime;
+            int waitTime = turnaroundTime - runningProcess->p_e.execTime;
+
+            // Write process execution details to file
+            fprintf(outStream, "%d %d %d 1\n", runningProcess->p_e.pid, turnaroundTime, waitTime);
+
+            // Remove the completed process from the list
+            processL_t* curr = *head;
+            prev = NULL;
+            while (curr != NULL) {
+                if (curr == runningProcess) {  // Found the process to remove
+                    if (prev == NULL) {
+                        // Removing the head node
+                        *head = curr->next;
+                    } else {
+                        // Bypass the node in the list
+                        prev->next = curr->next;
+                    }
+                    free(curr);  // Free the node
+                    break;
+                }
+                prev = curr;
+                curr = curr->next;
+            }
+
+            runningProcess = NULL;  // No process is running now
+            time += CNTXT_SWITCH;
+            contextSwitches++;
+        }
+
+        // Start a new process if no process is running
+        if (runningProcess == NULL && selected != NULL) {
+            runningProcess = selected;
+            if (runningProcess->p_e.startTime == -1) {  // If it's the first time the process runs
+                runningProcess->p_e.startTime = time;
+            }
+            printf("Time %d: Running process PID: %d, Priority: %d\n", time, runningProcess->p_e.pid, runningProcess->p_e.priority);
+            runningProcess->p_e.timeLeft--;  // Decrement remaining time
+            time++;  // Increment time
+        }
+
+        // If no process is available, increment time (idle time)
+        if (runningProcess == NULL && selected == NULL) {
+            printf("Time %d: No process available, idle...\n", time);
+            time++;
+        }
+    }
+
+    printf("Context switches: %d\n", contextSwitches);
+    fclose(outStream);  // Close output file
+}
+
 /**
  * Simulates an OS scheduler
  * @param filepath The filepath to the CSV containing the tasks to analyze
@@ -243,7 +355,7 @@ void simulate(char filepath[], int algo) {
     printf("\n");
 
     /*
-     * PART II: CALL REQUESTED ALGORITHM
+     * PART II: CALL REQUESTED ALGORITHM AND EXECUTE IT
      */
     switch (algo) {
         case 1:
@@ -252,8 +364,11 @@ void simulate(char filepath[], int algo) {
         case 2:
             roundRobin(head);
             break;
+        case 3:
+            priority_algo(&head);
+            break;
         default:
-            printf("Invalid output\n");
+            printf("Invalid input\n");
             exit(1);
     }
 }
@@ -264,7 +379,7 @@ void simulate(char filepath[], int algo) {
  */
 int main() {
     printf("Hello World!\n");
-    simulate(INPATH,2);
+    simulate(INPATH,3);
     printf("End Of Program P1\n");
     return 0;
 }
