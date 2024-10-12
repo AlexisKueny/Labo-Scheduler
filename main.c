@@ -194,6 +194,9 @@ void roundRobin(processL_t* head) {
             }
             else if (p_current->p_e.timeLeft == 0 && p_current->p_e.pid == completionCount) {
                 p_current->p_e.completionTime = timeFlow;
+                printf("============\n");
+                printStruct(p_current->p_e);
+                printf("============\n");
                 turnAround = p_current->p_e.completionTime - p_current->p_e.arrTime;
                 waitingTime = turnAround - p_current->p_e.execTime;
                 fprintf(outStream,"%d %d %d %d\n",p_current->p_e.pid,turnAround,waitingTime,0);
